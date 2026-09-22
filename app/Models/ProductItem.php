@@ -9,6 +9,8 @@ use App\Traits\HasUserAudit;
 class ProductItem extends Model
 {
     use SoftDeletes, HasUserAudit;
+
+    public const AUDIENCES = ['men', 'women', 'kids', 'unisex'];
     //
 
     /**
@@ -162,6 +164,14 @@ class ProductItem extends Model
         return $this->hasMany(Barcode::class);
     }
 
+    public function audiences()
+    {
+        return $this->belongsToMany(
+            Audience::class,
+            'audience_product_item'
+        )->withTimestamps();
+    }
+
     /**
      * Get the primary barcode (if the separate barcode field is used).
      * Note: The separate barcode field is stored directly on product_items.
@@ -258,6 +268,16 @@ class ProductItem extends Model
             ->withTimestamps();
     }
 
+    // ========== MUTATORS ==========
+
+    /**
+     * 👇 2. ADD THE MUTATOR (place it after your relationships or scopes)
+     * Ensure audience is always stored as an array.
+     * Handles: null, single string, or array input.
+     */
+
+    
+
     
 
 
@@ -326,6 +346,10 @@ class ProductItem extends Model
         return $query->where('brand_id', $brandId);
     }
 
+    public function scopeForAudience($query, string $audience)
+    {
+        return $query->whereJsonContains('audience', $audience);
+    }
     // ========== ACCESSORS ==========
 
     /**
@@ -372,4 +396,35 @@ class ProductItem extends Model
     {
         return "{$this->name} ({$this->sku})";
     }
+
+    public function scopeNewArrivals($query, int $days = 30)
+    {
+        return $query->where(function ($q) use ($days) {
+            $q->where('is_new', true)
+                ->orWhere('created_at', '>=', now()->subDays($days));
+        })->active();
+    }
+
+    public function scopeBestSellers($query)
+    {
+        return $query->orderBy('sales_count', 'desc');
+    }
+
+    public function scopeTrending($query)
+    {
+        return $query->orderBy('views_count', 'desc');
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true)->active();
+    }
+
+    //     public function audiences()
+    // {
+    //     return $this->belongsToMany(
+    //         Audience::class,
+    //         'audience_product_item'
+    //     )->withTimestamps();
+    // }
 }

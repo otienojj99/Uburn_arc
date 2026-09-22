@@ -17,7 +17,9 @@ use App\Http\Controllers\Api\StockTransactionController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WarehouseController;
+use App\Http\Controllers\Api\Admin\DiscountAdminController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ProductCollectionController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -32,9 +34,16 @@ Route::middleware(['auth:sanctum', 'role:super_admin,admin1,admin2'])->group(fun
 });
 
 Route::middleware(['auth:sanctum', 'role:super_admin,admin1'])->group(function () {
+
+    // ─── Specific routes FIRST ─────────────────────────────
+    Route::get('categories/tree', [CategoryController::class, 'tree']);
+
+    // ─── apiResource registers /categories and /categories/{category} ───
     Route::apiResource('categories', CategoryController::class);
+
+    // ─── Additional specific routes ────────────────────────
     Route::patch('categories/{category}/toggle-active', [CategoryController::class, 'toggleActive']);
-    Route::post('categories/{id}/restore', [CategoryController::class, 'restore']); // restore soft-deleted
+    Route::post('categories/{id}/restore', [CategoryController::class, 'restore']);
 });
 
 // Super admin and admin1 have full CRUD
@@ -290,4 +299,19 @@ Route::post('/test-upload', function (Illuminate\Http\Request $request) {
         'files_raw' => $_FILES,
         'content_type' => $request->header('Content-Type'),
     ]);
+});
+
+
+
+Route::prefix('collections')->group(function () {
+    Route::get('new-arrivals', [ProductCollectionController::class, 'newArrivals']);
+    Route::get('best-sellers', [ProductCollectionController::class, 'bestSellers']);
+    Route::get('trending', [ProductCollectionController::class, 'trending']);
+    Route::get('featured', [ProductCollectionController::class, 'featured']);
+});
+
+
+
+Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
+    Route::apiResource('discounts', DiscountAdminController::class);
 });

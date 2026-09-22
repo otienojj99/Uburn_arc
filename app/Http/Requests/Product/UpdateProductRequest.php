@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Product;
 
+use App\Models\ProductItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -82,6 +83,8 @@ class UpdateProductRequest extends FormRequest
             'gallery_images'        => 'nullable|array',
             'gallery_images.*'      => 'string|max:255',
             'attributes'            => 'nullable|array',
+            'audience'              => 'nullable|array',
+            'audience.*'            => 'string|in:' . implode(',', ProductItem::AUDIENCES),
             'variations'            => 'nullable|array',
         ];
     }

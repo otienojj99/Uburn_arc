@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Category\StoreCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use App\Http\Resources\CategoryTreeResource;
 use App\Models\Category;
 use App\Services\CategoryService;
 use App\Traits\ApiResponseTrait;
@@ -27,7 +28,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         //
-        $filters = $request->only(['search', 'is_active', 'parent_id', 'trashed']);
+        $filters = $request->only(['search', 'is_active', 'parent_id', 'roots_only', 'trashed']);
         $perPage = $request->input('per_page', 15);
 
         $categories = $this->categoryService->getPaginated($filters, $perPage);
@@ -37,21 +38,36 @@ class CategoryController extends Controller
     }
 
     /**
+     * Get the category tree (nested).
+     */
+
+    public function tree(Request $request)
+    {
+        $activeOnly = $request->input('active_only', true);
+        $categories = $this->categoryService->getTree($activeOnly);
+        return $this->successResponse(CategoryTreeResource::collection($categories));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->validated();
 
+        // if ($request->hasFile('image')) {
+        //     $file = $request->file('image');
+
+        //     $path = $file->store('categories', 's3'); // store in S3
+        //     $url = Storage::disk('s3')->url($path);
+
+        //     $data['image'] = $url;
+
+        //     \Log::info('Stored image URL: ' . $url);
+        // }
+
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-
-            $path = $file->store('categories', 's3'); // store in S3
-            $url = Storage::disk('s3')->url($path);
-
-            $data['image'] = $url;
-
-            \Log::info('Stored image URL: ' . $url);
+            $data['image'] = $request->file('image');
         }
 
         $category = $this->categoryService->create($data);
@@ -83,23 +99,27 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
 
+        // if ($request->hasFile('image')) {
+        //     $file = $request->file('image');
+
+        //     // 🔥 OPTIONAL: delete old image from S3
+        //     if ($category->image) {
+        //         $oldPath = parse_url($category->image, PHP_URL_PATH);
+        //         $oldPath = ltrim($oldPath, '/');
+        //         Storage::disk('s3')->delete($oldPath);
+        //     }
+
+        //     // ✅ Upload new image
+        //     $path = $file->store('categories', 's3');
+        //     $url = Storage::disk('s3')->url($path);
+
+        //     $data['image'] = $url;
+
+        //     \Log::info('Updated image URL: ' . $url);
+        // }
+
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-
-            // 🔥 OPTIONAL: delete old image from S3
-            if ($category->image) {
-                $oldPath = parse_url($category->image, PHP_URL_PATH);
-                $oldPath = ltrim($oldPath, '/');
-                Storage::disk('s3')->delete($oldPath);
-            }
-
-            // ✅ Upload new image
-            $path = $file->store('categories', 's3');
-            $url = Storage::disk('s3')->url($path);
-
-            $data['image'] = $url;
-
-            \Log::info('Updated image URL: ' . $url);
+            $data['image'] = $request->file('image');
         }
 
         $category = $this->categoryService->update($category, $data);

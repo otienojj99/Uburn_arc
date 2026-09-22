@@ -76,8 +76,9 @@ class ProductVariantController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ProductVariant $productVariant)
+    public function show(mixed $productVariant)
     {
+        $productVariant = $this->resolveVariant($productVariant);
         $productVariant->load('productItem');
         return $this->successResponse(new ProductVariantResource($productVariant));
     }
@@ -85,8 +86,9 @@ class ProductVariantController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProductVariantRequest $request, ProductVariant $productVariant)
+    public function update(UpdateProductVariantRequest $request, mixed $productVariant)
     {
+        $productVariant = $this->resolveVariant($productVariant);
         $variant = $this->variantService->update($productVariant, $request->validated());
 
         return $this->successResponse(
@@ -98,11 +100,19 @@ class ProductVariantController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProductVariant $productVariant)
+
+    public function destroy(mixed $productVariant)
     {
+        $productVariant = $this->resolveVariant($productVariant);
+
+        // Check if the variant is associated with any orders
+        \Log::info('Checking if variant is associated with any orders', ['variant_id' => $productVariant->id]);
         $this->variantService->delete($productVariant);
+        // checking if product is deleted successfully
+        \Log::info('Variant deleted successfully', ['variant_id' => $productVariant->id]);
         return $this->successResponse(null, 'Variant deleted successfully.');
     }
+
 
     public function restore($id)
     {
@@ -114,12 +124,20 @@ class ProductVariantController extends Controller
         }
     }
 
-    public function toggleActive(ProductVariant $productVariant)
+    public function toggleActive(mixed $productVariant)
     {
+        $productVariant = $this->resolveVariant($productVariant);
         $this->variantService->toggleActive($productVariant);
         return $this->successResponse(
             new ProductVariantResource($productVariant),
             'Variant status toggled successfully.'
         );
+    }
+
+    private function resolveVariant(mixed $productVariant): ProductVariant
+    {
+        return $productVariant instanceof ProductVariant
+            ? $productVariant
+            : ProductVariant::findOrFail($productVariant);
     }
 }

@@ -72,10 +72,30 @@ class ProductResource extends JsonResource
             'views_count'         => $this->views_count,
             'sales_count'         => $this->sales_count,
             'attributes'          => $this->attributes,
+            'audience'              => $this->audience ?? [],
+
+            // 👇 NEW: Human-readable labels for UI (e.g. ['Men', 'Women'])
+            'audience_labels'       => $this->getAudienceLabels(),
+
             'variations'          => $this->variations,
             'created_at'          => $this->created_at?->toISOString(),
             'updated_at'          => $this->updated_at?->toISOString(),
             'deleted_at'          => $this->deleted_at?->toISOString(),
         ];
     }
-}
+
+    protected function getAudienceLabels(): array
+    {
+        $labelsMap = [
+            'men'     => 'Men',
+            'women'   => 'Women',
+            'kids'    => 'Kids',
+            'unisex'  => 'Unisex',
+        ];
+
+        return collect($this->audience ?? [])
+            ->map(fn($value) => $labelsMap[$value] ?? $value)
+            ->values()
+            ->toArray();
+    }
+};

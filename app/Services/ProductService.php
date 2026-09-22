@@ -19,7 +19,8 @@ class ProductService
             'primarySupplier',
             'primaryWarehouse',
             'images',
-            'variants'
+            'variants',
+            'audiences',
         ])
             ->when($filters['search'] ?? null, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -33,7 +34,15 @@ class ProductService
             ->when($filters['max_price'] ?? null, fn($q, $price) => $q->where('selling_price', '<=', $price))
             ->when($filters['low_stock'] ?? false, fn($q) => $q->lowStock())
             ->when($filters['out_of_stock'] ?? false, fn($q) => $q->outOfStock())
-            ->when($filters['trashed'] ?? false, fn($q) => $q->onlyTrashed());
+            ->when($filters['trashed'] ?? false, fn($q) => $q->onlyTrashed())
+            ->when(
+                $filters['audience_id'] ?? null,
+                function ($q, $audienceId) {
+                    $q->whereHas('audiences', function ($query) use ($audienceId) {
+                        $query->where('audiences.id', $audienceId);
+                    });
+                }
+            );
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
@@ -44,6 +53,9 @@ class ProductService
 
     public function create(array $data): ProductItem
     {
+        $audienceIds = $data['audience_ids'] ?? [];
+
+        unset($data['audience_ids']);
         // Auto-generate slug if not provided
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -58,7 +70,13 @@ class ProductService
             $data['slug'] = $originalSlug . '-' . $count++;
         }
 
-        return ProductItem::create($data);
+        $product = ProductItem::create($data);
+
+        if (!empty($audienceIds)) {
+            $product->audiences()->sync($audienceIds);
+        }
+
+        return $product->load('audiences');
     }
 
     /**
@@ -67,6 +85,11 @@ class ProductService
 
     public function update(ProductItem $product, array $data): ProductItem
     {
+
+
+        $audienceIds = $data['audience_ids'] ?? null;
+
+        unset($data['audience_ids']);
         // Handle slug regeneration only if name changed and slug not provided
 
         if (empty($data['slug']) && isset($data['name']) && $data['name'] != $product->name) {
@@ -79,8 +102,12 @@ class ProductService
             }
         }
         $product->update($data);
-        // return $product->fresh();
-        return $product;
+
+        if ($audienceIds !== null) {
+            $product->audiences()->sync($audienceIds);
+        }
+
+        return $product->load('audiences');
     }
 
     /**

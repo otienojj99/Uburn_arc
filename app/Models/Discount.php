@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\DiscountUpdated;
 use App\Traits\HasUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +10,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Discount extends Model
 {
     use SoftDeletes, HasUserAudit;
+
+    protected static function booted(): void
+    {
+        static::saved(function (Discount $discount): void {
+            event(new DiscountUpdated($discount));
+        });
+
+        static::deleted(function (Discount $discount): void {
+            event(new DiscountUpdated($discount));
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +34,7 @@ class Discount extends Model
         'type',
         'value',
         'maximum_discount_amount',
+        'buy_get_type',
         'buy_quantity',
         'get_quantity',
         'free_product_id',
@@ -187,6 +200,13 @@ class Discount extends Model
                 ->orWhere(function ($sub) use ($productId) {
                     $sub->where('applies_to', 'specific_products')
                         ->whereJsonContains('eligible_product_ids', $productId);
+                })
+                ->orWhere(function ($sub) use ($productId) {
+                    // for categories, you'd need to join or use a subquery
+                    // simplified: we assume product's category_id is available
+                    $sub->where('applies_to', 'specific_categories')
+                        ->whereRaw("JSON_CONTAINS(eligible_category_ids, ?)", [json_encode($productId)]);
+                    // Better: use a pivot or relationship
                 });
         })->where(function ($q) use ($productId) {
             $q->whereNull('excluded_product_ids')
@@ -194,6 +214,13 @@ class Discount extends Model
         });
     }
 
+    /**
+     * Scope: discounts that have a banner image and should be shown publicly.
+     */
+    public function scopeHasBanner($query)
+    {
+        return $query->whereNotNull('banner_image')->where('is_public', true);
+    }
     // ========== ACCESSORS ==========
 
     /**
@@ -221,5 +248,10 @@ class Discount extends Model
             'fixed_price' => 'Fixed Price: ' . number_format($this->value, 2),
             default => (string) $this->value,
         };
+    }
+
+    public function getFreeProductAttribute()
+    {
+        return $this->free_product_id ? ProductItem::find($this->free_product_id) : null;
     }
 }
