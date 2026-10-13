@@ -32,6 +32,7 @@ class ProductImage extends Model
         'alt_text',
         'title',
         'caption',
+        'attributes',
         'is_primary',
         'is_active',
         'uploaded_by',
@@ -44,6 +45,7 @@ class ProductImage extends Model
      */
 
     protected $casts = [
+        'attributes' => 'array',
         'file_size'   => 'integer',
         'sort_order'  => 'integer',
         'is_primary'  => 'boolean',

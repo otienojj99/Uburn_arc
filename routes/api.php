@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Controllers\Api\Admin\DiscountAdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductCollectionController;
+use App\Http\Controllers\Api\ProductLaunchController;
+use App\Http\Controllers\Api\Admin\ProductLaunchAdminController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -315,3 +317,24 @@ Route::prefix('collections')->group(function () {
 Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('discounts', DiscountAdminController::class);
 });
+
+
+// ─── Public ─────────────────────────────────────────────
+Route::prefix('launches')->group(function () {
+    Route::get('current',  [ProductLaunchController::class, 'current']);
+    Route::get('upcoming', [ProductLaunchController::class, 'upcoming']);
+});
+
+// ─── Admin ──────────────────────────────────────────────
+Route::middleware(['auth:sanctum', 'role:super_admin,admin1'])
+    ->prefix('admin/launches')
+    ->group(function () {
+        Route::get('/',              [ProductLaunchAdminController::class, 'index']);
+        Route::post('/',             [ProductLaunchAdminController::class, 'store']);
+        Route::get('/{launch}',      [ProductLaunchAdminController::class, 'show']);
+        Route::put('/{launch}',      [ProductLaunchAdminController::class, 'update']);
+        Route::delete('/{launch}',   [ProductLaunchAdminController::class, 'destroy']);
+        Route::post('/{id}/restore', [ProductLaunchAdminController::class, 'restore']);
+        Route::patch('/{launch}/toggle-active', [ProductLaunchAdminController::class, 'toggleActive']);
+    });
+

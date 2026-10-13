@@ -15,9 +15,7 @@ class ProductCollectionController extends Controller
 
     public function __construct(
         protected ProductCollectionService $collectionService
-    ) {
-        throw new \Exception('Not implemented');
-    }
+    ) {}
 
     public function newArrivals(Request $request)
     {

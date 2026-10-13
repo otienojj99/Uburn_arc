@@ -38,6 +38,9 @@ class ProductImageResource extends JsonResource
             'alt_text'        => $this->alt_text,
             'title'           => $this->title,
             'caption'         => $this->caption,
+            'attributes' => empty($this->attributes)
+                ? new \stdClass()
+                : $this->attributes,
             'is_primary'      => $this->is_primary,
             'is_active'       => $this->is_active,
             'created_at'      => $this->created_at?->toISOString(),

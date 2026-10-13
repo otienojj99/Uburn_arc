@@ -31,15 +31,20 @@ class ProductImageController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProductImageRequest $request)
+    public function store(StoreProductImageRequest $request,  int $productId)
     {
+        $data = $request->validated();
+        $data['product_item_id'] = $productId;
 
         \Log::info($request->all());
         \Log::info($request->file('image'));
         $image = $this->productImageService->upload(
             $request->file('image'),
-            $request->validated()
+            // $request->validated()
+            $data
         );
+
+
 
         return $this->successResponse(
             new ProductImageResource($image),

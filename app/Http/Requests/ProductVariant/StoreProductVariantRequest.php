@@ -27,7 +27,7 @@ class StoreProductVariantRequest extends FormRequest
             'name'             => 'required|string|max:255',
             'attributes'       => 'nullable|array',
             'price_adjustment' => 'nullable|numeric|min:0',
-            'price'            => 'nullable|numeric|min:0',
+            'final_price'      => 'nullable|numeric|min:0',
             'stock'            => 'nullable|integer|min:0',
             'image_id' => 'nullable|exists:product_images,id',
             'is_active'        => 'sometimes|boolean',

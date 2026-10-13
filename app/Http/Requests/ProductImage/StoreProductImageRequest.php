@@ -22,7 +22,7 @@ class StoreProductImageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_item_id' => 'required|exists:product_items,id',
+            // 'product_item_id' => 'required|exists:product_items,id',
             'image'           => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
             'sort_order'      => 'sometimes|integer',
             'alt_text'        => 'nullable|string|max:255',
@@ -30,6 +30,10 @@ class StoreProductImageRequest extends FormRequest
             'caption'         => 'nullable|string|max:500',
             'is_primary'      => 'sometimes|boolean',
             'is_active'       => 'sometimes|boolean',
+            'attributes'         => 'nullable|array',
+            'attributes.color'   => 'nullable|string|max:50',
+            'attributes.view'    => 'nullable|string|max:50',
+            'attributes.material' => 'nullable|string|max:50',
         ];
     }
 }

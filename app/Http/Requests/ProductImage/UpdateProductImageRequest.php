@@ -29,6 +29,8 @@ class UpdateProductImageRequest extends FormRequest
             'caption'    => 'nullable|string|max:500',
             'is_primary' => 'sometimes|boolean',
             'is_active'  => 'sometimes|boolean',
+            'attributes'         => 'nullable|array',
+
         ];
     }
 }

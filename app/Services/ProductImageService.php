@@ -76,6 +76,7 @@ class ProductImageService
             'alt_text'        => $data['alt_text'] ?? null,
             'title'           => $data['title'] ?? null,
             'caption'         => $data['caption'] ?? null,
+            'attributes'      => $data['attributes'] ?? null,
             'is_primary'      => $data['is_primary'] ?? false,
             'is_active'       => $data['is_active'] ?? true,
             // Allow caller to override (e.g., in tests or background jobs) or fall back to currently authenticated user
